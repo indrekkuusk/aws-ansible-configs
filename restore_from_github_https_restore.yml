@@ -1,0 +1,78 @@
+---
+- name: Taasta landing-page (HTTPS, restore masin)
+  hosts: restore
+  become: yes
+
+  vars:
+    project_dir: /home/ubuntu/AWS-test
+    repo_url: git@github.com:indrekkuusk/AWS-test.git
+    container_name: landing
+    image_name: landingpage:full
+
+  tasks:
+    - name: Paigalda vajalikud paketid
+      apt:
+        name:
+          - docker.io
+          - git
+          - openssl
+        state: present
+        update_cache: yes
+
+    - name: Loo sihtkaust, kui see puudub
+      file:
+        path: "{{ project_dir }}"
+        state: directory
+        owner: ubuntu
+        group: ubuntu
+        mode: '0755'
+
+    - name: Klooni või uuenda GitHubi repo
+      git:
+        repo: "{{ repo_url }}"
+        dest: "{{ project_dir }}"
+        version: main
+        force: yes
+        key_file: /home/ubuntu/.ssh/id_ed25519
+
+
+    - name: Loo self-signed sertifikaadid, kui neid pole
+      command: >
+        openssl req -x509 -newkey rsa:2048 -nodes
+        -keyout {{ project_dir }}/nginx.key
+        -out {{ project_dir }}/nginx.crt
+        -days 365
+        -subj "/C=EE/ST=Vorumaa/L=Voru/O=IKuusk_AWS_test/OU=DevOps/CN=localhost"
+      args:
+        creates: "{{ project_dir }}/nginx.crt"
+
+    - name: Peata ja eemalda olemasolev container
+      shell: |
+        docker stop {{ container_name }} 2>/dev/null || true
+        docker rm {{ container_name }} 2>/dev/null || true
+
+    - name: Ehita uus Docker image
+      shell: |
+        cd {{ project_dir }}
+        docker build --no-cache -t {{ image_name }} .
+
+    - name: Käivita Docker container port 443 peal
+      shell: |
+        docker run -d -p 443:443 --name {{ container_name }} {{ image_name }}
+
+    - name: Kontrolli containeri olekut ja pordi sidumist
+      shell: docker ps --filter "name={{ container_name }}" --format "table {{'{{.ID}}'}}\t{{'{{.Image}}'}}\t{{'{{.Status}}'}}\t{{'{{.Ports}}'}}"
+      register: docker_status
+
+    - name: Kuvab containeri info
+      debug:
+        msg: "{{ docker_status.stdout_lines }}"
+
+    - name: Kontrolli HTTPS vastust localhostilt
+      shell: curl -skI https://localhost | head -n 3
+      register: curl_test
+      ignore_errors: yes
+
+    - name: Kuvab HTTPS kontrolli tulemuse
+      debug:
+        msg: "{{ curl_test.stdout_lines }}"

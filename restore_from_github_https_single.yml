@@ -1,0 +1,144 @@
+---
+- name: Taasta Docker landing-page GitHubist (HTTPS versioon, üks masin korraga)
+  hosts: docker_test
+  become: yes
+
+
+  tasks:
+    - name: Paigalda vajalikud paketid (Docker ja Git)
+      apt:
+        name:
+          - docker.io
+          - git
+          - openssl
+        state: present
+        update_cache: yes
+
+    - name: Käivita ja luba Docker teenus
+      service:
+        name: docker
+        state: started
+        enabled: yes
+
+    - name: Loo sihtkaust
+      file:
+        path: /opt/landing/AWS-test
+        state: directory
+        mode: '0755'
+
+    - name: Klooni või uuenda GitHubi repo
+      git:
+        repo: "https://github.com/indrekkuusk/AWS-test.git"
+        dest: /opt/landing/AWS-test
+        version: main
+        force: yes
+
+    - name: Loo self-signed sertifikaadid kui neid pole
+      command: >
+        openssl req -x509 -newkey rsa:2048 -nodes
+        -keyout nginx.key
+        -out nginx.crt
+        -days 365
+        -subj "/C=EE/ST=Vorumaa/L=Voru/O=IKuusk_AWS_test/OU=DevOps/CN=localhost"
+      args:
+        chdir: /opt/landing/AWS-test
+        creates: /opt/landing/AWS-test/nginx.crt
+
+    - name: Peata olemasolev Docker container (kui töötab)
+      command: docker stop landing
+      ignore_errors: yes
+
+    - name: Eemalda vana container (kui olemas)
+      command: docker rm landing
+      ignore_errors: yes
+
+    - name: Ehita uus Docker image (HTTPS)
+      command: docker build --no-cache -t landingpage:full .
+      args:
+        chdir: /opt/landing/AWS-test
+
+    - name: Käivita Docker container port 443 peal
+      command: >
+        docker run -d -p 443:443 --name landing landingpage:full
+      args:
+        chdir: /opt/landing/AWS-test
+      ignore_errors: yes
+
+    - name: Kontrolli, kas container töötab
+      shell: docker ps --filter "name=landing" --format "{{'{{'}}.Names{{'}}'}}"
+      register: container_status
+
+    - name: Kuvab tulemuse
+      debug:
+        msg: "Container töötab: {{ container_status.stdout_lines }}"
+- name: Taasta Docker landing-page GitHubist (HTTPS versioon, üks masin korraga)
+  hosts: restore   # kasutad `--limit restore` või vajadusel docker-test
+  become: yes
+
+  tasks:
+    - name: Paigalda vajalikud paketid (Docker ja Git)
+      apt:
+        name:
+          - docker.io
+          - git
+          - openssl
+        state: present
+        update_cache: yes
+
+    - name: Käivita ja luba Docker teenus
+      service:
+        name: docker
+        state: started
+        enabled: yes
+
+    - name: Loo sihtkaust
+      file:
+        path: /opt/landing/AWS-test
+        state: directory
+        mode: '0755'
+
+    - name: Klooni või uuenda GitHubi repo
+      git:
+        repo: "https://github.com/indrekkuusk/AWS-test.git"
+        dest: /opt/landing/AWS-test
+        version: main
+        force: yes
+
+    - name: Loo self-signed sertifikaadid kui neid pole
+      command: >
+        openssl req -x509 -newkey rsa:2048 -nodes
+        -keyout nginx.key
+        -out nginx.crt
+        -days 365
+        -subj "/C=EE/ST=Vorumaa/L=Voru/O=IKuusk_AWS_test/OU=DevOps/CN=localhost"
+      args:
+        chdir: /opt/landing/AWS-test
+        creates: /opt/landing/AWS-test/nginx.crt
+
+    - name: Peata olemasolev Docker container (kui töötab)
+      command: docker stop landing
+      ignore_errors: yes
+
+    - name: Eemalda vana container (kui olemas)
+      command: docker rm landing
+      ignore_errors: yes
+
+    - name: Ehita uus Docker image (HTTPS)
+      command: docker build --no-cache -t landingpage:full .
+      args:
+        chdir: /opt/landing/AWS-test
+
+    - name: Käivita Docker container port 443 peal
+      command: >
+        docker run -d -p 443:443 --name landing landingpage:full
+      args:
+        chdir: /opt/landing/AWS-test
+      ignore_errors: yes
+
+    - name: Kontrolli, kas container töötab
+      shell: docker ps --filter "name=landing" --format "{{'{{'}}.Names{{'}}'}}"
+      register: container_status
+
+    - name: Kuvab tulemuse
+      debug:
+        msg: "Container töötab: {{ container_status.stdout_lines }}"

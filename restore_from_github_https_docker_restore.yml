@@ -1,0 +1,63 @@
+---
+- name: Taasta landing-page (HTTPS) ainult docker-restore masinas
+  hosts: restore
+  become: yes
+
+  tasks:
+    - name: Paigalda vajalikud paketid
+      apt:
+        name:
+          - docker.io
+          - git
+          - openssl
+        state: present
+        update_cache: yes
+
+    - name: Loo sihtkaust, kui see puudub
+      file:
+        path: /home/ubuntu/AWS-test
+        state: directory
+        owner: ubuntu
+        group: ubuntu
+        mode: '0755'
+
+    - name: Klooni või uuenda GitHubi repo
+      git:
+        repo: "https://github.com/indrekkuusk/AWS-test.git"
+        dest: /home/ubuntu/AWS-test
+        version: main
+        force: yes
+
+    - name: Loo self-signed sertifikaadid kui neid pole
+      command: >
+        openssl req -x509 -newkey rsa:2048 -nodes
+        -keyout nginx.key
+        -out nginx.crt
+        -days 365
+        -subj "/C=EE/ST=Vorumaa/L=Voru/O=IKuusk_AWS_restore/OU=DevOps/CN=localhost"
+      args:
+        chdir: /home/ubuntu/AWS-test
+      creates: /home/ubuntu/AWS-test/nginx.crt
+
+    - name: Peata ja eemalda olemasolev container
+      shell: |
+        docker stop landing || true
+        docker rm landing || true
+
+    - name: Ehita uus Docker image
+      command: docker build -t landingpage:full .
+      args:
+        chdir: /home/ubuntu/AWS-test
+
+    - name: Käivita Docker container port 443 peal
+      command: docker run -d -p 443:443 --name landing landingpage:full
+      args:
+        chdir: /home/ubuntu/AWS-test
+
+    - name: Kontrolli containeri olekut ja pordi sidumist
+      shell: docker ps --filter "name=landing" --format "table {{.ID}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}"
+      register: container_status
+
+    - name: Kuvab containeri info
+      debug:
+        msg: "{{ container_status.stdout }}"
