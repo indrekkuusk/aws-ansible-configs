@@ -25,8 +25,8 @@ Playbookid
 Käivitus:
 ansible-playbook -i inventory.ini restore_from_github_https_docker_test.yml --limit docker_test
 
-Inventory struktuur
 
+Inventory struktuur
 [docker]
 172.31.39.214 ansible_user=ubuntu ansible_ssh_private_key_file=~/.ssh/IKuusk_EC2test.pem
 172.31.40.69 ansible_user=ubuntu ansible_ssh_private_key_file=~/.ssh/IKuusk_EC2test.pem
@@ -38,7 +38,6 @@ Inventory struktuur
 172.31.39.214
 
 SSH võtmete haldus
-
 Kõik serverid kasutavad sama EC2 võtmefaili:
 ~/.ssh/IKuusk_EC2test.pem
 
