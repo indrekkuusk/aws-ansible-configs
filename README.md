@@ -4,17 +4,16 @@
 - `restore` → tootmis-/taastemasina automaatne uuesti ülesehitus GitHubi repo põhjal
 
 
- 🌐 Masinad ja rollid
+ Masinad ja rollid
 
 | Grupp        | IP             | Kirjeldus |
-|---------------|----------------|------------|
-| **docker-test** | 172.31.39.214 | Arendusserver, kus testitakse ja ehitatakse uus Docker image (landingpage:full) |
-| **restore**     | 172.31.40.69  | Taastemasina versioon, mis laeb GitHubist repo, ehitab uue konteineri ja kontrollib HTTPS vastust |
-| **controller**  | 172.31.24.251 | Ansible juhtmasin, kus käivitatakse playbookid |
+|--------------------|---------------|---------------------------------------------------------------------------------------------------|
+| docker-test        | 172.31.39.214 | Arendusserver, kus testitakse ja ehitatakse uus Docker image (landingpage:full)                   |
+| docker-restore     | 172.31.40.69  | Taastemasina versioon, mis laeb GitHubist repo, ehitab uue konteineri ja kontrollib HTTPS vastust |
+| Ansible-controller | 172.31.24.251 | Ansible juhtmasin, kus käivitatakse playbookid                                                    |
 
----
 
- ⚙️ Playbookid
+Playbookid
 
 - restore_from_github_https_docker_test.yml`
 
@@ -23,7 +22,7 @@
 - Loob/kontrollib self-signed TLS sertifikaadid  
 - Ehitab Docker image’i ja käivitab konteineri pordil **443**
 
-**Käivitus:**
+Käivitus:
 ansible-playbook -i inventory.ini restore_from_github_https_docker_test.yml --limit docker_test
 
 Inventory struktuur
