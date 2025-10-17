@@ -20,7 +20,7 @@ Playbookid
 - Uuendab testmasinat (`docker-test`)  
 - Klooni GitHubi repo `AWS-test`  
 - Loob/kontrollib self-signed TLS sertifikaadid  
-- Ehitab Docker image’i ja käivitab konteineri pordil **443**
+- Ehitab Docker image’i ja käivitab konteineri pordil 443
 
 Käivitus:
 ansible-playbook -i inventory.ini restore_from_github_https_docker_test.yml --limit docker_test
