@@ -18,7 +18,7 @@ Playbookid
 - restore_from_github_https_docker_test.yml`
 
 - Uuendab testmasinat (`docker-test`)  
-- Klooni GitHubi repo `AWS-test`  
+- Kloonib GitHubi repo `AWS-test`  
 - Loob/kontrollib self-signed TLS sertifikaadid  
 - Ehitab Docker image’i ja käivitab konteineri pordil 443
 
@@ -37,13 +37,6 @@ Inventory struktuur
 [docker_test]
 172.31.39.214
 
-SSH võtmete haldus
-Kõik serverid kasutavad sama EC2 võtmefaili:
-~/.ssh/IKuusk_EC2test.pem
-
-Ansible controlleril on eraldi GitHubi autentimise võti:
-~/.ssh/id_ed25519.pub
-(See on lisatud GitHubi SSH Keyde alla kui Ansible-controller.)
 
 Vajalikud komponendid
 
@@ -56,7 +49,7 @@ GitHubi repo AWS-test sisaldab toimivat Dockerfile’i ja veebifailide struktuur
 Kontroll
 
 Pärast taastamist või uuendust saab tulemuse kontrollida:
-curl -k https://<EC2-public-IP>/
+curl -k https://EC2-public-IP/
 
 Kui vastus sisaldab:
 HTTP/1.1 200 OK
